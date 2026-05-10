@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard — Traveloop{% endblock %}
+{% block nav_admin_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h3 class="fw-bold mb-0"><i class="bi bi-speedometer2 text-primary me-2"></i>Admin Analytics</h3>
+    <span class="badge text-bg-dark">Staff only</span>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Total Users</p>
+          <h4 class="fw-bold mb-0">{{ total_users }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Total Trips</p>
+          <h4 class="fw-bold mb-0">{{ total_trips }}</h4>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card shadow-sm border-0 h-100">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Avg Trips / User</p>
+          <h4 class="fw-bold mb-0">{{ avg_trips_per_user }}</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header fw-semibold">Popular Cities (Top 5)</div>
+        <div class="card-body">
+          <canvas id="citiesChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-lg-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-header fw-semibold">Popular Activity Categories</div>
+        <div class="card-body">
+          <canvas id="activitiesChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-header fw-semibold d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <span>Trip Creation Trend</span>
+          <form method="get" class="d-flex align-items-center gap-2">
+            <label for="days" class="small text-muted mb-0">Window</label>
+            <select id="days" name="days" class="form-select form-select-sm" onchange="this.form.submit()">
+              <option value="7" {% if trend_days == '7' %}selected{% endif %}>7 days</option>
+              <option value="14" {% if trend_days == '14' %}selected{% endif %}>14 days</option>
+              <option value="30" {% if trend_days == '30' %}selected{% endif %}>30 days</option>
+            </select>
+          </form>
+        </div>
+        <div class="card-body">
+          <canvas id="trendChart" height="110"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Average Cost / Trip</p>
+          <h5 class="fw-bold mb-0">${{ avg_cost_per_trip|floatformat:2 }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-md-6">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <p class="text-muted small mb-2">Total Revenue (All Activities)</p>
+          <h5 class="fw-bold mb-0">${{ total_revenue|floatformat:2 }}</h5>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const cityLabels = {{ city_labels|safe }};
+  const cityValues = {{ city_values|safe }};
+  const activityLabels = {{ activity_labels|safe }};
+  const activityValues = {{ activity_values|safe }};
+  const trendLabels = {{ trend_labels|safe }};
+  const trendValues = {{ trend_values|safe }};
+
+  new Chart(document.getElementById('citiesChart'), {
+    type: 'pie',
+    data: {
+      labels: cityLabels,
+      datasets: [{ data: cityValues, backgroundColor: ['#4F46E5', '#22C55E', '#F59E0B', '#06B6D4', '#A855F7'] }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+  });
+
+  new Chart(document.getElementById('activitiesChart'), {
+    type: 'bar',
+    data: {
+      labels: activityLabels,
+      datasets: [{ label: 'Usage', data: activityValues, backgroundColor: '#4F46E5' }]
+    },
+    options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+
+  new Chart(document.getElementById('trendChart'), {
+    type: 'line',
+    data: {
+      labels: trendLabels,
+      datasets: [{ label: 'Trips Created', data: trendValues, borderColor: '#22C55E', fill: false, tension: 0.25 }]
+    },
+    options: { scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!-- Reusable trip card — used on dashboard and trip_list -->
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row align-items-center">
+
+      <!-- Cover photo or colour swatch -->
+      <div class="col-auto d-none d-sm-block">
+        {% if trip.cover_photo %}
+          <img src="{{ trip.cover_photo.url }}"
+               class="rounded-3"
+               style="width:80px;height:70px;object-fit:cover;"
+               alt="{{ trip.name }}">
+        {% else %}
+          <div class="rounded-3 d-flex align-items-center justify-content-center"
+               style="width:80px;height:70px;background:{{ badge_color|default:'#4F46E5' }}22;">
+            <i class="bi bi-airplane fs-3" style="color:{{ badge_color|default:'#4F46E5' }};"></i>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Main info -->
+      <div class="col">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+          <div>
+            <span class="badge rounded-pill mb-1"
+                  style="background:{{ badge_color|default:'#4F46E5' }};font-size:.7rem;">
+              {{ badge_label|default:trip.status|capfirst }}
+            </span>
+            <h6 class="fw-bold mb-1">{{ trip.name }}</h6>
+            <p class="text-muted small mb-0">
+              <i class="bi bi-calendar3 me-1"></i>
+              {{ trip.start_date|date:"M j, Y" }} – {{ trip.end_date|date:"M j, Y" }}
+              &nbsp;·&nbsp;
+              <i class="bi bi-geo-alt me-1"></i>{{ trip.stop_count }} stop{{ trip.stop_count|pluralize }}
+              &nbsp;·&nbsp;
+              <i class="bi bi-currency-dollar"></i>${{ trip.total_budget|floatformat:0 }}
+            </p>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex gap-2 flex-shrink-0">
+            <a href="{% url 'trips:trip_detail' trip.pk %}"
+               class="btn btn-primary btn-sm">
+              <i class="bi bi-eye me-1"></i>View
+            </a>
+            <a href="{% url 'trips:trip_edit' trip.pk %}"
+               class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'trips:trip_delete' trip.pk %}"
+               class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-trash"></i>
+            </a>
+          </div>
+        </div>
+
+        {% if trip.description %}
+        <p class="text-muted small mt-2 mb-0"
+           style="display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
+          {{ trip.description }}
+        </p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+</div>

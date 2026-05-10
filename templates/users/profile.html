@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}My Profile — Traveloop{% endblock %}
+{% block nav_dashboard %}{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+      <h2 class="fw-bold mb-1" style="color:var(--text)">My Profile</h2>
+      <p class="text-muted mb-0 small">Manage your personal details and preferences</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- LEFT: Avatar + Summary card -->
+    <div class="col-12 col-md-4 col-lg-3">
+      <div class="card text-center p-4">
+
+        <!-- Profile photo -->
+        {% if profile.photo %}
+          <img src="{{ profile.photo.url }}"
+               class="rounded-circle mx-auto mb-3 border"
+               style="width:100px;height:100px;object-fit:cover;"
+               alt="Profile Photo">
+        {% else %}
+          <div class="rounded-circle bg-light d-flex align-items-center justify-content-center
+                      border mx-auto mb-3"
+               style="width:100px;height:100px;">
+            <i class="bi bi-person-fill text-secondary" style="font-size:2.5rem;"></i>
+          </div>
+        {% endif %}
+
+        <h5 class="fw-bold mb-0">
+          {{ request.user.get_full_name|default:request.user.username }}
+        </h5>
+        <p class="text-muted small mb-1">@{{ request.user.username }}</p>
+        <p class="text-muted small mb-3">{{ request.user.email }}</p>
+
+        {% if profile.city or profile.country %}
+          <p class="small mb-3">
+            <i class="bi bi-geo-alt text-primary me-1"></i>
+            {{ profile.city }}{% if profile.city and profile.country %}, {% endif %}{{ profile.country }}
+          </p>
+        {% endif %}
+
+        <!-- Trip stats -->
+        <div class="row g-2 text-center border-top pt-3">
+          <div class="col-6">
+            <div class="fw-bold" style="color:var(--primary)">{{ request.user.trips.count }}</div>
+            <div class="text-muted" style="font-size:.75rem;">Total Trips</div>
+          </div>
+          <div class="col-6">
+            <div class="fw-bold" style="color:var(--accent)">
+              {{ request.user.trips.filter.count|default:"—" }}
+            </div>
+            <div class="text-muted" style="font-size:.75rem;">Cities</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Recent Trips mini-list -->
+      {% if recent_trips %}
+      <div class="card mt-3">
+        <div class="card-header small fw-semibold">
+          <i class="bi bi-clock-history me-1"></i>Recent Trips
+        </div>
+        <div class="list-group list-group-flush">
+          {% for trip in recent_trips %}
+          <a href="{% url 'trips:trip_detail' trip.pk %}"
+             class="list-group-item list-group-item-action py-2 small">
+            <div class="fw-semibold">{{ trip.name }}</div>
+            <div class="text-muted" style="font-size:.75rem;">
+              {{ trip.start_date|date:"M j" }} – {{ trip.end_date|date:"M j, Y" }}
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT: Edit Forms -->
+    <div class="col-12 col-md-8 col-lg-9">
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+
+        <!-- Personal Info card -->
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-person-lines-fill text-primary"></i>
+            Personal Information
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">First Name</label>
+                {{ user_form.first_name }}
+                {% if user_form.first_name.errors %}
+                  <div class="text-danger small">{{ user_form.first_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Last Name</label>
+                {{ user_form.last_name }}
+                {% if user_form.last_name.errors %}
+                  <div class="text-danger small">{{ user_form.last_name.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Email Address</label>
+                {{ user_form.email }}
+                {% if user_form.email.errors %}
+                  <div class="text-danger small">{{ user_form.email.errors.0 }}</div>
+                {% endif %}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Username</label>
+                {{ user_form.username }}
+                {% if user_form.username.errors %}
+                  <div class="text-danger small">{{ user_form.username.errors.0 }}</div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extended profile card -->
+        <div class="card mb-4">
+          <div class="card-header d-flex align-items-center gap-2">
+            <i class="bi bi-geo-alt-fill text-primary"></i>
+            Travel Details
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Phone Number</label>
+                {{ profile_form.phone_number }}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Profile Photo</label>
+                {{ profile_form.photo }}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">City</label>
+                {{ profile_form.city }}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">Country</label>
+                {{ profile_form.country }}
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold small">Additional Information</label>
+                {{ profile_form.additional_info }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save button -->
+        <div class="d-flex justify-content-end gap-2">
+          <a href="{% url 'trips:dashboard' %}" class="btn btn-outline-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary px-4">
+            <i class="bi bi-check-lg me-1"></i>Save Changes
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}{{ form_title }} — Traveloop{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{% url 'trips:dashboard' %}" style="color:var(--primary)">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'trips:trip_list' %}" style="color:var(--primary)">My Trips</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'trips:trip_detail' trip.pk %}#trip-notes" style="color:var(--primary)">{{ trip.name }}</a></li>
+          <li class="breadcrumb-item active">{% if note %}Edit note{% else %}New note{% endif %}</li>
+        </ol>
+      </nav>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white d-flex align-items-center gap-2 py-3">
+          <i class="bi bi-journal-text text-primary fs-5"></i>
+          <span class="fw-bold">{{ form_title }}</span>
+        </div>
+        <div class="card-body p-4">
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ form.title.label }}</label>
+              {{ form.title }}
+              {% if form.title.errors %}<div class="text-danger small mt-1">{{ form.title.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">{{ form.content.label }}</label>
+              {{ form.content }}
+              {% if form.content.errors %}<div class="text-danger small mt-1">{{ form.content.errors.0 }}</div>{% endif %}
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 small">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="d-flex justify-content-end gap-2">
+              <a href="{% url 'trips:trip_detail' trip.pk %}#trip-notes" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg me-1"></i>{{ btn_label }}
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

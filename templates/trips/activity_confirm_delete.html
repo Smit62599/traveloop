@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Delete Activity — Traveloop{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6 col-lg-5">
+
+      <div class="card border-danger mt-5">
+        <div class="card-header bg-danger text-white fw-semibold">
+          <i class="bi bi-exclamation-triangle me-2"></i>Delete Activity
+        </div>
+        <div class="card-body text-center p-4">
+          <i class="bi bi-trash text-danger" style="font-size:3rem;"></i>
+          <h5 class="fw-bold mt-3 mb-2">Remove "{{ activity.name }}"?</h5>
+          <p class="text-muted small mb-1">
+            This activity is part of <strong>{{ stop.city_name }}</strong> on
+            <strong>{{ trip.name }}</strong>.
+          </p>
+          <p class="text-muted small mb-4">This cannot be undone.</p>
+
+          <div class="d-flex justify-content-center gap-3">
+            <a href="{% url 'trips:trip_detail' trip.pk %}"
+               class="btn btn-outline-secondary px-4">
+              Cancel
+            </a>
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger px-4">
+                <i class="bi bi-trash me-1"></i>Yes, Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

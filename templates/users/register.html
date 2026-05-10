@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Register — Traveloop{% endblock %}
+
+{% block content %}
+<div class="min-vh-100 d-flex align-items-center justify-content-center py-5"
+     style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+
+        <!-- Brand -->
+        <div class="text-center mb-4">
+          <h1 class="fw-800 fs-2 text-white mb-1">Travel<span style="color:#22C55E">oop</span></h1>
+          <p class="text-white-50 mb-0">Create your free account and start planning.</p>
+        </div>
+
+        <!-- Card -->
+        <div class="card border-0 shadow-lg" style="border-radius:16px;">
+          <div class="card-body p-4 p-md-5">
+
+            <!-- Avatar placeholder -->
+            <div class="text-center mb-4">
+              <div class="rounded-circle bg-light d-inline-flex align-items-center
+                          justify-content-center border"
+                   style="width:72px;height:72px;">
+                <i class="bi bi-person-fill text-secondary fs-2"></i>
+              </div>
+              <p class="text-muted small mt-1 mb-0">Profile photo can be added later</p>
+            </div>
+
+            <h5 class="fw-bold text-center mb-4" style="color:var(--text)">Create Account</h5>
+
+            <form method="post" novalidate>
+              {% csrf_token %}
+
+              <!-- Row 1: First Name + Last Name -->
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">First Name</label>
+                  {{ form.first_name }}
+                  {% if form.first_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">Last Name</label>
+                  {{ form.last_name }}
+                  {% if form.last_name.errors %}
+                    <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Row 2: Email + Username -->
+              <div class="row g-3 mb-3">
+                <div class="col-7">
+                  <label class="form-label fw-semibold small">Email Address</label>
+                  {{ form.email }}
+                  {% if form.email.errors %}
+                    <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-5">
+                  <label class="form-label fw-semibold small">Username</label>
+                  {{ form.username }}
+                  {% if form.username.errors %}
+                    <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Row 3: Password + Confirm -->
+              <div class="row g-3 mb-3">
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">Password</label>
+                  {{ form.password1 }}
+                  {% if form.password1.errors %}
+                    <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+                  {% endif %}
+                </div>
+                <div class="col-6">
+                  <label class="form-label fw-semibold small">Confirm Password</label>
+                  {{ form.password2 }}
+                  {% if form.password2.errors %}
+                    <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Non-field errors -->
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger py-2 small">
+                  {% for error in form.non_field_errors %}
+                    <div>{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+
+              <div class="d-grid mt-4 mb-3">
+                <button type="submit" class="btn btn-accent fw-semibold py-2">
+                  <i class="bi bi-person-plus me-2"></i>Register User
+                </button>
+              </div>
+            </form>
+
+            <p class="text-center small mb-0" style="color:var(--muted)">
+              Already have an account?
+              <a href="{% url 'users:login' %}" class="fw-semibold text-decoration-none"
+                 style="color:var(--primary)">Sign in</a>
+            </p>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

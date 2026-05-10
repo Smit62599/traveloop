@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}{{ form_title }} — Traveloop{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{% url 'trips:dashboard' %}" style="color:var(--primary)">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'trips:trip_list' %}" style="color:var(--primary)">My Trips</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'trips:trip_detail' trip.pk %}" style="color:var(--primary)">{{ trip.name }}</a></li>
+          <li class="breadcrumb-item active">{{ stop.city_name }} · {% if activity %}Edit{% else %}Add{% endif %} activity</li>
+        </ol>
+      </nav>
+
+      <div class="card">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-ticket-perforated text-primary fs-5"></i>
+          <span class="fw-bold">{{ form_title }}</span>
+        </div>
+        <div class="card-body p-4">
+
+          <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ form.description.label }}</label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold small">{{ form.cost.label }}</label>
+                {{ form.cost }}
+                {% if form.cost.errors %}<div class="text-danger small mt-1">{{ form.cost.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold small">{{ form.duration.label }}</label>
+                {{ form.duration }}
+                {% if form.duration.errors %}<div class="text-danger small mt-1">{{ form.duration.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-sm-4">
+                <label class="form-label fw-semibold small">{{ form.category.label }}</label>
+                {{ form.category }}
+                {% if form.category.errors %}<div class="text-danger small mt-1">{{ form.category.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 small">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <div class="d-flex justify-content-end gap-2">
+              <a href="{% url 'trips:trip_detail' trip.pk %}" class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg me-1"></i>{{ btn_label }}
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

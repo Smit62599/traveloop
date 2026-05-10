@@ -1,0 +1,466 @@
+{% extends 'base.html' %}
+{% block title %}{{ trip.name }} — Traveloop{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'trips:dashboard' %}" style="color:var(--primary)">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'trips:trip_list' %}" style="color:var(--primary)">My Trips</a></li>
+      <li class="breadcrumb-item active">{{ trip.name }}</li>
+    </ol>
+  </nav>
+
+  <!-- Trip header -->
+  <div class="card shadow-sm mb-4 overflow-hidden border-0">
+    {% if trip.cover_photo %}
+    <img src="{{ trip.cover_photo.url }}"
+         style="height:200px;object-fit:cover;width:100%;" alt="{{ trip.name }}">
+    {% else %}
+    <div style="height:160px;background:linear-gradient(135deg,#4F46E5,#7C3AED);"></div>
+    {% endif %}
+    <div class="card-body">
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+        <div>
+          {% if trip.status == 'ongoing' %}
+            <span class="badge rounded-pill mb-2" style="background:#22C55E;">Ongoing</span>
+          {% elif trip.status == 'upcoming' %}
+            <span class="badge rounded-pill mb-2" style="background:#4F46E5;">Upcoming</span>
+          {% else %}
+            <span class="badge rounded-pill mb-2 bg-secondary">Completed</span>
+          {% endif %}
+          <h3 class="fw-bold mb-1">{{ trip.name }}</h3>
+          <p class="text-muted small mb-2">
+            <i class="bi bi-calendar3 me-1"></i>
+            {{ trip.start_date|date:"M j, Y" }} – {{ trip.end_date|date:"M j, Y" }}
+            &nbsp;·&nbsp; {{ trip.duration_days }} day{{ trip.duration_days|pluralize }}
+            &nbsp;·&nbsp;
+            <i class="bi bi-geo-alt me-1"></i>{{ trip.stop_count }} stop{{ trip.stop_count|pluralize }}
+          </p>
+          <p class="small mb-2 fw-semibold" style="color:var(--primary);">
+            <i class="bi bi-wallet2 me-1"></i>
+            Total budget
+            <span class="text-dark">${{ trip_budget_total|floatformat:2 }}</span>
+            <span class="text-muted fw-normal">(auto estimate + activities + overrides)</span>
+          </p>
+          {% if trip.description %}
+          <p class="mb-0 text-muted">{{ trip.description }}</p>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-2">
+          <form method="post" action="{% url 'trips:toggle_trip_public' trip.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-globe me-1"></i>{% if trip.is_public %}Make Private{% else %}Make Public{% endif %}
+            </button>
+          </form>
+          <a href="{% url 'trips:invoice_detail' trip.pk %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-receipt me-1"></i>View Invoice
+          </a>
+          <a href="{% url 'trips:trip_edit' trip.pk %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Edit
+          </a>
+          <a href="{% url 'trips:trip_delete' trip.pk %}" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-trash me-1"></i>Delete
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap mb-3">
+    <form method="post" action="{% url 'trips:copy_trip' trip.pk %}" class="d-inline">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-files me-1"></i>Copy Trip
+      </button>
+    </form>
+    {% if trip.is_public %}
+    <a href="{% url 'trips:public_trip_view' trip.share_token %}" class="btn btn-outline-success btn-sm">
+      <i class="bi bi-link-45deg me-1"></i>Share Link
+    </a>
+    <button type="button"
+            class="btn btn-outline-success btn-sm"
+            onclick="copyLink('{{ request.scheme }}://{{ request.get_host }}{% url 'trips:public_trip_view' trip.share_token %}')">
+      <i class="bi bi-clipboard me-1"></i>Copy Public Link
+    </button>
+    {% endif %}
+    <a href="{% url 'community:create_post' %}?trip={{ trip.pk }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-share me-1"></i>Share Trip
+    </a>
+    <a href="{% url 'trips:checklist' trip.pk %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-check2-square me-1"></i>Checklist
+    </a>
+    <a href="#trip-notes" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-journal-text me-1"></i>Notes
+    </a>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left: Stops & activities (ordered itinerary) -->
+    <div class="col-12 col-lg-8">
+
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 border-bottom">
+          <div class="d-flex flex-wrap align-items-start justify-content-between gap-3">
+            <div>
+              <h5 class="mb-1 fw-bold d-flex align-items-center gap-2">
+                <i class="bi bi-signpost-2 text-primary"></i>
+                Stops &amp; activities
+              </h5>
+              <p class="mb-0 small text-muted">Stops are listed in route order (order field, then dates).</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <a href="{% url 'trips:stop_create' trip.pk %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Add Stop
+              </a>
+              {% if stops %}
+              <div class="btn-group">
+                <button type="button"
+                        class="btn btn-outline-primary btn-sm dropdown-toggle"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                  <i class="bi bi-ticket-perforated me-1"></i>Add Activity
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                  {% for stop in stops %}
+                  <li>
+                    <a class="dropdown-item"
+                       href="{% url 'trips:activity_create' trip.pk stop.pk %}">
+                      <i class="bi bi-geo-alt me-2 text-muted"></i>{{ stop.city_name }}{% if stop.country %}, {{ stop.country }}{% endif %}
+                    </a>
+                  </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% else %}
+              <button type="button" class="btn btn-outline-primary btn-sm" disabled
+                      title="Add at least one stop before adding activities">
+                <i class="bi bi-ticket-perforated me-1"></i>Add Activity
+              </button>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body">
+          {% if stops %}
+            {% for stop in stops %}
+            <div class="card mb-3 border shadow-sm">
+              <div class="card-header bg-light d-flex align-items-start justify-content-between flex-wrap gap-2 py-3">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold text-white"
+                       style="width:44px;height:44px;background:var(--primary);font-size:.9rem;"
+                       title="Stop order {{ forloop.counter }}">
+                    {{ forloop.counter }}
+                  </div>
+                  <div>
+                    <h6 class="fw-bold mb-0">{{ stop.city_name }}{% if stop.country %}, {{ stop.country }}{% endif %}</h6>
+                    <span class="text-muted small">
+                      <i class="bi bi-calendar3 me-1"></i>
+                      {{ stop.start_date|date:"M j" }} – {{ stop.end_date|date:"M j, Y" }}
+                      &nbsp;·&nbsp; {{ stop.duration_days }} day{{ stop.duration_days|pluralize }}
+                    </span>
+                  </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                  {% if stop.id in high_cost_stop_ids %}
+                  <span class="badge bg-warning text-dark">High-cost stop</span>
+                  {% endif %}
+                  <span class="small text-muted me-1 d-none d-sm-inline">Subtotal</span>
+                  <span class="badge rounded-pill" style="background:var(--accent);"
+                        title="Sum of activity costs for this stop">
+                    ${{ stop.budget_subtotal|floatformat:2 }}
+                  </span>
+                  <a href="{% url 'trips:stop_edit' trip.pk stop.pk %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-pencil"></i>
+                  </a>
+                  <a href="{% url 'trips:stop_delete' trip.pk stop.pk %}" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash"></i>
+                  </a>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <h6 class="small text-uppercase text-muted fw-semibold mb-3">
+                  <i class="bi bi-list-task me-1"></i>Activities in {{ stop.city_name }}
+                </h6>
+
+                {% if stop.activities.all %}
+                <div class="d-flex flex-column gap-2">
+                  {% for activity in stop.activities.all %}
+                  {% ifchanged activity.category %}
+                  <div class="{% if not forloop.first %}mt-2{% endif %}">
+                    <span class="badge rounded-pill"
+                          style="background:var(--primary)18;color:var(--primary);font-size:.72rem;">
+                      {{ activity.get_category_display }}
+                    </span>
+                  </div>
+                  {% endifchanged %}
+
+                  <div class="card border mb-0">
+                    <div class="card-body py-3 px-3">
+                      <div class="d-flex align-items-start justify-content-between gap-2">
+                        <div>
+                          <div class="fw-semibold">{{ activity.name }}</div>
+                          <div class="text-muted small mt-1">
+                            <i class="bi bi-clock me-1"></i>{{ activity.duration_display }}
+                            <span class="mx-1">·</span>${{ activity.cost|floatformat:2 }}
+                          </div>
+                          {% if activity.description %}
+                          <p class="text-muted small mb-0 mt-2">{{ activity.description|truncatewords:28 }}</p>
+                          {% endif %}
+                        </div>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                          <a href="{% url 'trips:activity_edit' trip.pk stop.pk activity.pk %}"
+                             class="btn btn-outline-secondary btn-sm py-1 px-2"
+                             title="Edit activity"><i class="bi bi-pencil"></i></a>
+                          <a href="{% url 'trips:activity_delete' trip.pk stop.pk activity.pk %}"
+                             class="btn btn-outline-danger btn-sm py-1 px-2"
+                             title="Delete activity"><i class="bi bi-trash"></i></a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="card border bg-light">
+                  <div class="card-body py-4 text-center">
+                    <p class="text-muted small mb-0">No activities for this stop yet.</p>
+                  </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-3">
+                  <a href="{% url 'trips:activity_create' trip.pk stop.pk %}"
+                     class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i>Add Activity
+                  </a>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="card border text-center py-5 bg-light">
+              <div class="card-body">
+                <i class="bi bi-geo-alt text-muted" style="font-size:3rem;"></i>
+                <p class="mt-3 text-muted mb-4">No stops yet. Add your first city to build your route.</p>
+                <a href="{% url 'trips:stop_create' trip.pk %}" class="btn btn-primary">
+                  <i class="bi bi-plus-lg me-1"></i>Add Stop
+                </a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="card shadow-sm border-0" id="trip-notes">
+        <div class="card-header bg-white py-3 border-bottom d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <span class="fw-semibold mb-0 d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-primary"></i>
+            Notes
+          </span>
+          <a href="{% url 'trips:note_create' trip.pk %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Add note
+          </a>
+        </div>
+        <div class="card-body">
+          {% if notes %}
+            {% for note in notes %}
+            <div class="card border mb-3 shadow-sm">
+              <div class="card-body">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                  <h6 class="fw-bold mb-0">
+                    {% if note.title %}{{ note.title }}{% else %}<span class="text-muted fw-semibold">Untitled note</span>{% endif %}
+                  </h6>
+                  <div class="d-flex gap-1 flex-shrink-0">
+                    <a href="{% url 'trips:note_edit' trip.pk note.pk %}"
+                       class="btn btn-outline-secondary btn-sm py-0 px-2" title="Edit"><i class="bi bi-pencil"></i></a>
+                    <a href="{% url 'trips:note_delete' trip.pk note.pk %}"
+                       class="btn btn-outline-danger btn-sm py-0 px-2" title="Delete"><i class="bi bi-trash"></i></a>
+                  </div>
+                </div>
+                <div class="small text-body-secondary mb-2">{{ note.content|linebreaks }}</div>
+                <p class="text-muted small mb-0">
+                  <i class="bi bi-clock me-1"></i>Updated {{ note.updated_at|date:"M j, Y g:i a" }}
+                </p>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-journal-text d-block mb-2" style="font-size:2rem;"></i>
+              <p class="small mb-3">No notes yet. Add reminders, hotel info, or trip memories.</p>
+              <a href="{% url 'trips:note_create' trip.pk %}" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Add note
+              </a>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Budget summary -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-graph-up-arrow me-2 text-primary"></i>Budget Insights
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between small mb-2">
+            <span>Total cost</span>
+            <strong>${{ trip_budget_total|floatformat:2 }}</strong>
+          </div>
+          <div class="d-flex justify-content-between small mb-3">
+            <span>Average / day</span>
+            <strong>${{ avg_cost_per_day|floatformat:2 }}</strong>
+          </div>
+
+          {% if over_budget_days %}
+          <div class="alert alert-warning py-2 small">
+            <strong>⚠ Some days exceed average budget:</strong>
+            {% for d in over_budget_days %}
+              {{ d.date|date:"M j" }} (${{ d.total|floatformat:2 }}){% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-success py-2 small mb-3">
+            No over-budget days detected against current average/day.
+          </div>
+          {% endif %}
+
+          <canvas id="budgetChart" height="180"></canvas>
+          <hr>
+          <canvas id="budgetBarChart" height="140"></canvas>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0 mb-3">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-wallet2 me-2 text-primary"></i>Budget Summary
+        </div>
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+            <div>
+              <span class="fw-bold d-block">Trip total</span>
+              <span class="small text-muted">All activities, all stops</span>
+            </div>
+            <span class="fs-5 fw-bold" style="color:var(--primary)">${{ trip_budget_total|floatformat:2 }}</span>
+          </div>
+          {% if category_totals %}
+            {% for cat in category_totals %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span class="small text-muted text-capitalize">{{ cat.category }}</span>
+              <span class="small fw-semibold">${{ cat.total|floatformat:2 }}</span>
+            </div>
+            <!-- Mini progress bar -->
+            {% if trip_budget_total %}
+            <div class="progress mb-3" style="height:4px;">
+              <div class="progress-bar" role="progressbar"
+                   style="width:{% widthratio cat.total trip_budget_total 100 %}%;background:var(--primary);">
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+          {% else %}
+            <p class="text-muted small text-center mb-0">
+              Add activities with costs to see your budget breakdown.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Per-stop costs -->
+      {% if stops %}
+      <div class="card shadow-sm border-0">
+        <div class="card-header fw-semibold">
+          <i class="bi bi-pin-map me-2 text-primary"></i>Subtotal by stop
+        </div>
+        <div class="list-group list-group-flush">
+          {% for stop in stops %}
+          <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+            <span class="small fw-semibold">{{ stop.city_name }}</span>
+            <span class="badge rounded-pill" style="background:var(--accent);"
+                  title="Activity costs at this stop only">
+              ${{ stop.budget_subtotal|floatformat:2 }}
+            </span>
+          </div>
+          {% endfor %}
+          <div class="list-group-item d-flex justify-content-between align-items-center py-2 bg-light fw-semibold small">
+            <span>Trip total</span>
+            <span style="color:var(--primary);">${{ trip_budget_total|floatformat:2 }}</span>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  function copyLink(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const toastEl = document.getElementById('copyLinkToast');
+      if (toastEl) new bootstrap.Toast(toastEl).show();
+    });
+  }
+
+  const labels = {{ chart_labels|safe }};
+  const values = {{ chart_values|safe }};
+  const ctx = document.getElementById('budgetChart');
+  const barCtx = document.getElementById('budgetBarChart');
+  if (ctx) {
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: values,
+          backgroundColor: ['#4F46E5', '#22C55E', '#F59E0B', '#06B6D4', '#6B7280'],
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+  if (barCtx) {
+    new Chart(barCtx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Estimated Cost',
+          data: values,
+          backgroundColor: ['#4F46E5', '#22C55E', '#F59E0B', '#06B6D4'],
+          borderWidth: 1,
+        }]
+      },
+      options: {
+        scales: { y: { beginAtZero: true } },
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+</script>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="copyLinkToast" class="toast text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">Public link copied to clipboard.</div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+{% endblock %}

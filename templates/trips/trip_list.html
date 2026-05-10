@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}My Trips — Traveloop{% endblock %}
+{% block nav_trips %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Page header -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h2 class="fw-bold mb-1">My Trips</h2>
+      <p class="text-muted mb-0 small">All your travel plans in one place.</p>
+    </div>
+    <a href="{% url 'trips:trip_create' %}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i>Plan a Trip
+    </a>
+  </div>
+
+  <!-- Search + Sort bar -->
+  <div class="card mb-4 border-0 bg-white shadow-sm">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-center">
+        <div class="col-12 col-md-6">
+          <div class="input-group">
+            <span class="input-group-text bg-white border-end-0">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input type="text" name="q" value="{{ query }}"
+                   class="form-control border-start-0"
+                   placeholder="Search trips...">
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <select name="sort" class="form-select">
+            <option value="-start_date" {% if sort == "-start_date" %}selected{% endif %}>Newest first</option>
+            <option value="start_date"  {% if sort == "start_date"  %}selected{% endif %}>Oldest first</option>
+            <option value="name"        {% if sort == "name"        %}selected{% endif %}>Name A–Z</option>
+            <option value="-name"       {% if sort == "-name"       %}selected{% endif %}>Name Z–A</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-3 d-grid">
+          <button type="submit" class="btn btn-outline-primary">Filter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Ongoing -->
+  {% if ongoing %}
+  <div class="mb-4">
+    <h5 class="section-title d-flex align-items-center gap-2">
+      <span class="badge rounded-pill" style="background:var(--accent);font-size:.7rem;">LIVE</span>
+      Ongoing
+    </h5>
+    {% for trip in ongoing %}
+      {% include 'trips/_trip_card.html' with trip=trip badge_color="#22C55E" badge_label="Ongoing" %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Upcoming -->
+  {% if upcoming %}
+  <div class="mb-4">
+    <h5 class="section-title">Upcoming</h5>
+    {% for trip in upcoming %}
+      {% include 'trips/_trip_card.html' with trip=trip badge_color="#4F46E5" badge_label="Upcoming" %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Completed -->
+  {% if completed %}
+  <div class="mb-4">
+    <h5 class="section-title">Completed</h5>
+    {% for trip in completed %}
+      {% include 'trips/_trip_card.html' with trip=trip badge_color="#6B7280" badge_label="Completed" %}
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Empty state -->
+  {% if not ongoing and not upcoming and not completed %}
+  <div class="card text-center py-5">
+    <i class="bi bi-map text-muted" style="font-size:3.5rem;"></i>
+    <h5 class="mt-3 fw-bold">
+      {% if query %}No trips match "{{ query }}"{% else %}No trips yet{% endif %}
+    </h5>
+    <p class="text-muted">
+      {% if query %}Try a different search term.{% else %}Start planning your first adventure!{% endif %}
+    </p>
+    {% if not query %}
+    <div><a href="{% url 'trips:trip_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Plan a Trip</a></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

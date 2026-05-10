@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}{{ post.title }} — Community — Traveloop{% endblock %}
+{% block nav_community %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'trips:dashboard' %}" style="color:var(--primary)">Dashboard</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'community:feed' %}" style="color:var(--primary)">Community</a></li>
+      <li class="breadcrumb-item active">{{ post.title|truncatewords:6 }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <div class="col-12 col-lg-8">
+      <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+          <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+            <div>
+              <div class="small text-muted mb-1">
+                <i class="bi bi-person-circle me-1"></i>{{ post.user.get_full_name|default:post.user.username }}
+                <span class="mx-1">·</span>{{ post.created_at|date:"M j, Y g:i a" }}
+              </div>
+              <h4 class="fw-bold mb-0">{{ post.title }}</h4>
+              {% if post.trip %}
+              <p class="small text-muted mb-0 mt-2">
+                <i class="bi bi-pin-map me-1 text-primary"></i>
+                Trip: <a href="{% url 'trips:trip_detail' post.trip.pk %}" style="color:var(--primary)">{{ post.trip.name }}</a>
+              </p>
+              {% endif %}
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span class="badge rounded-pill bg-light text-dark border">
+                <i class="bi bi-heart-fill text-danger me-1"></i>{{ post.likes }} likes
+              </span>
+              <form method="post" action="{% url 'community:like_post' post.pk %}" class="m-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                  <i class="bi bi-heart me-1"></i>Like
+                </button>
+              </form>
+            </div>
+          </div>
+          <div class="text-body-secondary" style="white-space: pre-wrap;">{{ post.content }}</div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white fw-semibold">
+          <i class="bi bi-chat-dots me-2 text-primary"></i>Comments ({{ comments|length }})
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'community:add_comment' post.pk %}" class="mb-4">
+            {% csrf_token %}
+            <label class="form-label small fw-semibold">Add a comment</label>
+            {{ comment_form.content }}
+            <button type="submit" class="btn btn-primary btn-sm mt-2">Post comment</button>
+          </form>
+
+          {% if comments %}
+            <ul class="list-group list-group-flush">
+              {% for c in comments %}
+              <li class="list-group-item px-0">
+                <div class="fw-semibold small">{{ c.user.get_full_name|default:c.user.username }}</div>
+                <div class="text-muted small mb-1">{{ c.created_at|date:"M j, Y g:i a" }}</div>
+                <div class="small" style="white-space: pre-wrap;">{{ c.content }}</div>
+              </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted small mb-0">No comments yet. Start the conversation!</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm border-0">
+        <div class="card-body">
+          <a href="{% url 'community:feed' %}" class="btn btn-outline-secondary btn-sm w-100 mb-2">
+            <i class="bi bi-arrow-left me-1"></i>Back to feed
+          </a>
+          <a href="{% url 'community:create_post' %}" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-plus-lg me-1"></i>New post
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

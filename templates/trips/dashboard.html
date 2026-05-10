@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Traveloop{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="container">
+
+  <!-- Hero Banner -->
+  <div class="rounded-4 p-4 p-md-5 mb-4 text-white position-relative overflow-hidden"
+       style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); min-height:200px;">
+    <div class="position-relative" style="z-index:2;">
+      <h2 class="fw-bold mb-1 fs-3">
+        Welcome back, {{ request.user.first_name|default:request.user.username }}! ✈️
+      </h2>
+      <p class="mb-3 opacity-75">Where are you heading next? Your next adventure awaits.</p>
+      <a href="{% url 'trips:trip_create' %}" class="btn btn-accent fw-semibold px-4">
+        <i class="bi bi-plus-lg me-1"></i>Plan a New Trip
+      </a>
+    </div>
+    <div class="position-absolute top-0 end-0 opacity-10"
+         style="width:300px;height:300px;background:white;border-radius:50%;transform:translate(80px,-80px);z-index:1;"></div>
+    <div class="position-absolute bottom-0 end-0 opacity-10"
+         style="width:180px;height:180px;background:white;border-radius:50%;transform:translate(40px,60px);z-index:1;"></div>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold" style="color:var(--primary)">{{ total_trips }}</div>
+        <div class="text-muted small">Total Trips</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold" style="color:var(--accent)">{{ total_cities }}</div>
+        <div class="text-muted small">Cities Visited</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold" style="color:#F59E0B">{{ total_activities }}</div>
+        <div class="text-muted small">Activities</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card text-center p-3">
+        <div class="fs-1 fw-bold" style="color:#EF4444">${{ total_budget|floatformat:0 }}</div>
+        <div class="text-muted small">Total Budget</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-12 col-lg-8">
+
+      {% if ongoing %}
+      <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="section-title mb-0">
+            <span class="badge rounded-pill me-2" style="background:var(--accent);font-size:.7rem;">LIVE</span>
+            Ongoing Trips
+          </h5>
+        </div>
+        {% for trip in ongoing %}{% include 'trips/_trip_card.html' with trip=trip badge_color="#22C55E" badge_label="Ongoing" %}{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if upcoming %}
+      <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="section-title mb-0">Upcoming Trips</h5>
+          <a href="{% url 'trips:trip_list' %}" class="small text-decoration-none" style="color:var(--primary)">View all <i class="bi bi-arrow-right"></i></a>
+        </div>
+        {% for trip in upcoming %}{% include 'trips/_trip_card.html' with trip=trip badge_color="#4F46E5" badge_label="Upcoming" %}{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if not ongoing and not upcoming %}
+      <div class="mb-4">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h5 class="section-title mb-0">Recent Trips</h5>
+          <a href="{% url 'trips:trip_list' %}" class="small text-decoration-none" style="color:var(--primary)">View all <i class="bi bi-arrow-right"></i></a>
+        </div>
+        {% for trip in recent %}
+          {% include 'trips/_trip_card.html' with trip=trip badge_color="#6B7280" badge_label="Completed" %}
+        {% empty %}
+          <div class="card text-center py-5">
+            <i class="bi bi-map text-muted" style="font-size:3rem;"></i>
+            <p class="mt-3 text-muted">No trips yet. Let's plan your first adventure!</p>
+            <div><a href="{% url 'trips:trip_create' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Plan a Trip</a></div>
+          </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-12 col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header fw-semibold"><i class="bi bi-globe-americas me-2 text-primary"></i>Top Regional Picks</div>
+        <div class="list-group list-group-flush">
+          {% for pick in regional_picks %}
+          <div class="list-group-item d-flex align-items-center justify-content-between py-3">
+            <div class="d-flex align-items-center gap-3">
+              <span style="font-size:1.6rem;">{{ pick.emoji }}</span>
+              <div>
+                <div class="fw-semibold small">{{ pick.city }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ pick.country }}</div>
+              </div>
+            </div>
+            <a href="{% url 'trips:trip_create' %}" class="btn btn-outline-primary btn-sm">Plan</a>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header fw-semibold"><i class="bi bi-lightning-charge me-2 text-primary"></i>Quick Actions</div>
+        <div class="list-group list-group-flush">
+          <a href="{% url 'trips:trip_create' %}" class="list-group-item list-group-item-action py-3">
+            <i class="bi bi-plus-circle me-2 text-primary"></i>Plan a new trip
+          </a>
+          <a href="{% url 'trips:trip_list' %}" class="list-group-item list-group-item-action py-3">
+            <i class="bi bi-map me-2 text-primary"></i>View all my trips
+          </a>
+          <a href="{% url 'users:profile' %}" class="list-group-item list-group-item-action py-3">
+            <i class="bi bi-person me-2 text-primary"></i>Edit my profile
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

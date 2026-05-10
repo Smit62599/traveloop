@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block title %}{{ form_title }} — Traveloop{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10 col-lg-7">
+
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb small">
+          <li class="breadcrumb-item"><a href="{% url 'trips:dashboard' %}" style="color:var(--primary)">Dashboard</a></li>
+          <li class="breadcrumb-item"><a href="{% url 'trips:trip_list' %}" style="color:var(--primary)">My Trips</a></li>
+          <li class="breadcrumb-item active">{{ form_title }}</li>
+        </ol>
+      </nav>
+
+      <div class="card">
+        <div class="card-header d-flex align-items-center gap-2">
+          <i class="bi bi-airplane text-primary fs-5"></i>
+          <span class="fw-bold">{{ form_title }}</span>
+        </div>
+        <div class="card-body p-4">
+
+          <form method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+
+            <!-- Trip Name -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ form.name.label }}</label>
+              {{ form.name }}
+              {% if form.name.errors %}<div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Dates -->
+            <div class="row g-3 mb-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">{{ form.start_date.label }}</label>
+                {{ form.start_date }}
+                {% if form.start_date.errors %}<div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>{% endif %}
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold small">{{ form.end_date.label }}</label>
+                {{ form.end_date }}
+                {% if form.end_date.errors %}<div class="text-danger small mt-1">{{ form.end_date.errors.0 }}</div>{% endif %}
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="mb-3">
+              <label class="form-label fw-semibold small">{{ form.description.label }}</label>
+              {{ form.description }}
+              {% if form.description.errors %}<div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Cover Photo -->
+            <div class="mb-4">
+              <label class="form-label fw-semibold small">{{ form.cover_photo.label }}</label>
+              {% if trip and trip.cover_photo %}
+              <div class="mb-2">
+                <img src="{{ trip.cover_photo.url }}" class="rounded-3"
+                     style="height:100px;object-fit:cover;" alt="Current cover">
+                <span class="text-muted small ms-2">Current photo</span>
+              </div>
+              {% endif %}
+              {{ form.cover_photo }}
+              {% if form.cover_photo.errors %}<div class="text-danger small mt-1">{{ form.cover_photo.errors.0 }}</div>{% endif %}
+            </div>
+
+            <!-- Budget Overrides -->
+            <div class="card bg-light border mb-4">
+              <div class="card-body">
+                <h6 class="fw-semibold mb-3">Manual Budget Overrides (optional)</h6>
+                <div class="row g-3">
+                  <div class="col-sm-4">
+                    <label class="form-label fw-semibold small">{{ form.manual_hotel_cost.label }}</label>
+                    {{ form.manual_hotel_cost }}
+                    {% if form.manual_hotel_cost.errors %}<div class="text-danger small mt-1">{{ form.manual_hotel_cost.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label fw-semibold small">{{ form.manual_food_cost.label }}</label>
+                    {{ form.manual_food_cost }}
+                    {% if form.manual_food_cost.errors %}<div class="text-danger small mt-1">{{ form.manual_food_cost.errors.0 }}</div>{% endif %}
+                  </div>
+                  <div class="col-sm-4">
+                    <label class="form-label fw-semibold small">{{ form.manual_transport_cost.label }}</label>
+                    {{ form.manual_transport_cost }}
+                    {% if form.manual_transport_cost.errors %}<div class="text-danger small mt-1">{{ form.manual_transport_cost.errors.0 }}</div>{% endif %}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Non-field errors -->
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger py-2 small">{{ form.non_field_errors.0 }}</div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-end gap-2">
+              <a href="{% if trip %}{% url 'trips:trip_detail' trip.pk %}{% else %}{% url 'trips:trip_list' %}{% endif %}"
+                 class="btn btn-outline-secondary">Cancel</a>
+              <button type="submit" class="btn btn-primary px-4">
+                <i class="bi bi-check-lg me-1"></i>{{ btn_label }}
+              </button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
